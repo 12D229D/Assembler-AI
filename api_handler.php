@@ -5,7 +5,7 @@
 header('Content-Type: application/json'); // Indicamos que la respuesta será en formato JSON
 
 // ¡IMPORTANTE! Pega tu clave de API de Gemini aquí.
-$apiKey = 'AIzaSyAknlhqXhES0FQ0OfkSiqfAWo3OjV88Scc';
+$apiKey = 'AIzaSyCVH_ruga9Xdt_3c4JtQg4EBMrv4_lEsMM';
 
 // 2. Recibir la pregunta del usuario desde el frontend
 $input = json_decode(file_get_contents('php://input'), true);
