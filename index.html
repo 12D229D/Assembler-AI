@@ -3,110 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Asistente Ensamblador x86</title>
+    <meta name="description" content="Asistente IA especializado en lenguaje ensamblador x86 con backend multiproveedor LLM.">
+    <title>Assembler-AI | Asistente Ensamblador x86</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        #chat-container { flex-grow: 1; display: flex; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
-        #chat-window { flex-grow: 1; overflow-y: auto; padding: 20px; border: 1px solid #333; }
-        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.5; }
-        .user-message { background-color: #0055ff; color: white; align-self: flex-end; margin-left: 20%; }
-        .bot-message { background-color: #3a3a3a; color: #f1f1f1; align-self: flex-start; margin-right: 20%; white-space: pre-wrap; /* Para respetar saltos de línea y espacios en el código */ }
-        .bot-message code { background-color: #272727; padding: 0.2em 0.4em; border-radius: 3px; font-family: "Courier New", Courier, monospace; }
-        .bot-message pre { background-color: #272727; border: 1px solid #444; padding: 10px; border-radius: 5px; overflow-x: auto; }
-        #input-area { display: flex; padding: 10px; border-top: 1px solid #333; }
-        #user-input { flex-grow: 1; padding: 10px; border: 1px solid #555; border-radius: 20px; background-color: #252525; color: white; font-size: 16px; }
-        #send-btn { background-color: #0055ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-left: 10px; cursor: pointer; font-size: 16px; }
-        #send-btn:hover { background-color: #0044cc; }
+        :root { color-scheme: dark; --bg: #08111f; --panel: #101b2e; --panel-2: #16243a; --text: #eef5ff; --muted: #9fb2cc; --brand: #4f8cff; --brand-2: #7c3aed; --danger: #ff6b6b; --border: rgba(255,255,255,.12); }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(79,140,255,.25), transparent 34rem), linear-gradient(135deg, var(--bg), #05070d); color: var(--text); }
+        main { width: min(1040px, 100%); min-height: 100vh; margin: 0 auto; padding: 24px; display: grid; grid-template-rows: auto 1fr auto; gap: 18px; }
+        .hero { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 22px; background: rgba(16,27,46,.82); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.28); backdrop-filter: blur(18px); }
+        h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 3vw, 2.4rem); letter-spacing: -.04em; }
+        .hero p { margin: 0; color: var(--muted); max-width: 680px; line-height: 1.6; }
+        .badge { white-space: nowrap; padding: 10px 14px; border-radius: 999px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 700; }
+        #chat-window { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding: 20px; background: rgba(8,17,31,.72); border: 1px solid var(--border); border-radius: 24px; min-height: 420px; }
+        .message { width: fit-content; max-width: min(82%, 760px); padding: 14px 16px; border-radius: 18px; line-height: 1.55; overflow-wrap: anywhere; box-shadow: 0 10px 35px rgba(0,0,0,.18); }
+        .user-message { align-self: flex-end; background: linear-gradient(135deg, var(--brand), #2563eb); color: white; border-bottom-right-radius: 6px; }
+        .bot-message { align-self: flex-start; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 6px; white-space: pre-wrap; }
+        .bot-message code { background: rgba(0,0,0,.28); padding: .16em .38em; border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; }
+        .status { color: var(--muted); font-size: .95rem; }
+        #input-area { display: flex; gap: 12px; padding: 14px; background: rgba(16,27,46,.86); border: 1px solid var(--border); border-radius: 24px; }
+        #user-input { flex: 1; min-height: 52px; resize: vertical; padding: 14px 16px; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.06); color: var(--text); font: inherit; outline: none; }
+        #user-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,140,255,.18); }
+        #send-btn { border: 0; border-radius: 18px; padding: 0 22px; color: white; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 800; cursor: pointer; }
+        #send-btn:disabled { cursor: not-allowed; opacity: .55; }
+        .error { color: var(--danger); }
+        @media (max-width: 720px) { main { padding: 12px; } .hero { align-items: flex-start; flex-direction: column; } #input-area { flex-direction: column; } #send-btn { min-height: 48px; } .message { max-width: 94%; } }
     </style>
 </head>
 <body>
-
-    <div id="chat-container">
-        <div id="chat-window">
-            <div class="message bot-message">
-                ¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?
+    <main>
+        <header class="hero">
+            <div>
+                <h1>Assembler-AI</h1>
+                <p>Asistente especializado en ensamblador x86, optimización de bajo nivel y depuración. Backend preparado para Gemini, OpenAI, Anthropic y proveedores compatibles.</p>
             </div>
-        </div>
-        <div id="input-area">
-            <input type="text" id="user-input" placeholder="Escribe tu pregunta sobre ASM aquí...">
-            <button id="send-btn">Enviar</button>
-        </div>
-    </div>
+            <span class="badge">Multi‑LLM</span>
+        </header>
+
+        <section id="chat-window" aria-live="polite" aria-label="Conversación con Assembler-AI">
+            <div class="message bot-message">¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?</div>
+        </section>
+
+        <form id="input-area" autocomplete="off">
+            <textarea id="user-input" rows="2" maxlength="8000" placeholder="Escribe tu pregunta sobre ASM aquí..." aria-label="Mensaje para el asistente"></textarea>
+            <button id="send-btn" type="submit">Enviar</button>
+        </form>
+    </main>
 
     <script>
         const chatWindow = document.getElementById('chat-window');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const inputArea = document.getElementById('input-area');
 
-        // Función para agregar mensajes al chat
-        function addMessage(text, sender) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', `${sender}-message`);
-            // Usamos innerText para el usuario para prevenir inyección de HTML
-            // Usamos innerHTML para el bot para permitir formato (negrita, etc.) si Gemini lo envía.
-            if (sender === 'user') {
-                messageElement.innerText = text;
-            } else {
-                // Gemini usa Markdown. Hacemos un reemplazo simple para código y negrita.
-                let formattedText = text
-                    .replace(/`([^`]+)`/g, '<code>$1</code>') // Código en línea
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Negrita
-                messageElement.innerHTML = formattedText;
-            }
-            chatWindow.appendChild(messageElement);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll hacia abajo
+        function formatBotText(text) {
+            const escaped = text.replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+            return escaped
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         }
 
-        async function handleSend() {
+        function addMessage(text, sender, extraClass = '') {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender}-message ${extraClass}`.trim();
+            messageElement.innerHTML = sender === 'bot' ? formatBotText(text) : '';
+            if (sender === 'user') messageElement.innerText = text;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return messageElement;
+        }
+
+        async function handleSend(event) {
+            event.preventDefault();
             const messageText = userInput.value.trim();
-            if (messageText === '') return;
+            if (!messageText || sendBtn.disabled) return;
 
             addMessage(messageText, 'user');
-            userInput.value = ''; // Limpiar el input
-
-            // Mostrar un indicador de "escribiendo..."
-            const typingIndicator = document.createElement('div');
-            typingIndicator.classList.add('message', 'bot-message');
-            typingIndicator.innerText = 'Escribiendo...';
-            chatWindow.appendChild(typingIndicator);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+            userInput.value = '';
+            sendBtn.disabled = true;
+            const typingIndicator = addMessage('Analizando y generando respuesta...', 'bot', 'status');
 
             try {
-                // Llamada al backend
                 const response = await fetch('api_handler.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: messageText })
                 });
+                const data = await response.json().catch(() => ({}));
+                typingIndicator.remove();
 
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
+                if (!response.ok || data.error) {
+                    addMessage(data.error || `Error del servidor: ${response.status}`, 'bot', 'error');
+                    return;
                 }
 
-                const data = await response.json();
-                
-                // Quitar el indicador de "escribiendo..." y mostrar la respuesta real
-                chatWindow.removeChild(typingIndicator);
-
-                if (data.reply) {
-                    addMessage(data.reply, 'bot');
-                } else {
-                    addMessage(data.error || 'Ocurrió un error desconocido.', 'bot');
-                }
-
+                addMessage(data.reply || 'No se recibió contenido del proveedor LLM.', 'bot');
             } catch (error) {
-                chatWindow.removeChild(typingIndicator);
-                addMessage(`Error de conexión: ${error.message}`, 'bot');
+                typingIndicator.remove();
+                addMessage(`Error de conexión: ${error.message}`, 'bot', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                userInput.focus();
             }
         }
 
-        sendBtn.addEventListener('click', handleSend);
+        inputArea.addEventListener('submit', handleSend);
         userInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleSend();
-            }
+            if (event.key === 'Enter' && !event.shiftKey) handleSend(event);
         });
     </script>
-
 </body>
 </html>

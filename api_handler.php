@@ -1,65 +1,43 @@
 <?php
-// Fichero: api_handler.php
 
-// 1. Configuración de seguridad y respuesta
-header('Content-Type: application/json'); // Indicamos que la respuesta será en formato JSON
+declare(strict_types=1);
 
-// ¡IMPORTANTE! Pega tu clave de API de Gemini aquí.
-$apiKey = 'AIzaSyCVH_ruga9Xdt_3c4JtQg4EBMrv4_lEsMM';
+use AssemblerAI\Config\Config;
+use AssemblerAI\Http\JsonResponse;
+use AssemblerAI\LLM\LlmProviderFactory;
 
-// 2. Recibir la pregunta del usuario desde el frontend
-$input = json_decode(file_get_contents('php://input'), true);
-if (!isset($input['message'])) {
-    echo json_encode(['error' => 'No se recibió ningún mensaje.']);
+require __DIR__ . '/bootstrap.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    JsonResponse::send(['error' => 'Método no permitido. Usa POST.'], 405);
     exit;
 }
-$userMessage = $input['message'];
 
-// 3. Tu prompt personalizado para el bot
-$systemPrompt = "Eres un asistente experto en programación en Lenguaje Ensamblador x86. Respondes de forma clara, técnica y precisa, usando ejemplos en NASM o MASM cuando sea útil. Ayudas a resolver errores, optimizar rutinas, y explicar conceptos complejos de bajo nivel de forma sencilla.";
-
-// 4. Preparar la petición para la API de Gemini
-$apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' . $apiKey;
-
-$data = [
-    // El "system_instruction" establece el comportamiento del modelo
-    'system_instruction' => [
-        'parts' => [
-            ['text' => $systemPrompt]
-        ]
-    ],
-    // "contents" es el historial de la conversación. Aquí solo enviamos el mensaje actual.
-    'contents' => [
-        [
-            'role' => 'user',
-            'parts' => [
-                ['text' => $userMessage]
-            ]
-        ]
-    ]
-];
-
-// 5. Realizar la llamada a la API usando cURL (estándar en hosting)
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $apiUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Es importante para la seguridad
-
-$response = curl_exec($ch);
-$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-// 6. Procesar la respuesta de Gemini y enviarla al frontend
-if ($httpcode == 200) {
-    $responseData = json_decode($response, true);
-    // Navegamos por la estructura de la respuesta para obtener el texto
-    $botResponseText = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? 'No he podido procesar tu solicitud.';
-    echo json_encode(['reply' => $botResponseText]);
-} else {
-    // Si hay un error, lo enviamos para depuración
-    echo json_encode(['error' => 'Error al contactar la API de Gemini.', 'details' => json_decode($response)]);
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput ?: '', true);
+if (!is_array($input)) {
+    JsonResponse::send(['error' => 'La petición debe ser JSON válido.'], 400);
+    exit;
 }
-?>
+
+$message = trim((string) ($input['message'] ?? ''));
+$runtime = Config::llm();
+if ($message === '') {
+    JsonResponse::send(['error' => 'No se recibió ningún mensaje.'], 422);
+    exit;
+}
+
+$messageLength = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
+if ($messageLength > $runtime['max_message_length']) {
+    JsonResponse::send(['error' => 'El mensaje supera el límite configurado.'], 422);
+    exit;
+}
+
+try {
+    $provider = LlmProviderFactory::create($runtime['provider'], Config::providers(), $runtime);
+    $reply = $provider->generate($message, $runtime['system_prompt']);
+    JsonResponse::send(['reply' => $reply, 'provider' => $runtime['provider']]);
+} catch (Throwable $exception) {
+    error_log('[Assembler-AI] ' . $exception->getMessage());
+    JsonResponse::send(['error' => 'No se pudo generar la respuesta. Revisa la configuración del proveedor LLM.'], 502);
+}
