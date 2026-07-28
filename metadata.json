@@ -1,0 +1,8 @@
+{
+  "name": "Assembler-AI",
+  "description": "Asistente IA especializado en lenguaje ensamblador x86 con backend multiproveedor LLM.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

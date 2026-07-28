@@ -6,19 +6,122 @@
     <meta name="description" content="Asistente IA especializado en lenguaje ensamblador x86 con backend multiproveedor LLM.">
     <title>Assembler-AI | Asistente Ensamblador x86</title>
     <style>
-        :root { color-scheme: dark; --bg: #08111f; --panel: #101b2e; --panel-2: #16243a; --text: #eef5ff; --muted: #9fb2cc; --brand: #4f8cff; --brand-2: #7c3aed; --danger: #ff6b6b; --border: rgba(255,255,255,.12); }
+        :root { color-scheme: dark; --bg: #08111f; --panel: #101b2e; --panel-2: #16243a; --sidebar-bg: #0b1424; --sidebar-border: rgba(255,255,255,.08); --text: #eef5ff; --muted: #9fb2cc; --brand: #4f8cff; --brand-2: #7c3aed; --danger: #ff6b6b; --border: rgba(255,255,255,.12); }
         * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(79,140,255,.25), transparent 34rem), linear-gradient(135deg, var(--bg), #05070d); color: var(--text); }
-        main { width: min(1040px, 100%); min-height: 100vh; margin: 0 auto; padding: 24px; display: grid; grid-template-rows: auto 1fr auto; gap: 18px; }
-        .hero { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 22px; background: rgba(16,27,46,.82); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.28); backdrop-filter: blur(18px); }
+        body { margin: 0; min-height: 100vh; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(79,140,255,.15), transparent 34rem), linear-gradient(135deg, var(--bg), #05070d); color: var(--text); overflow-x: hidden; }
+
+        /* App Layout Container */
+        .app-layout { display: flex; min-height: 100vh; width: 100%; position: relative; }
+
+        /* Sidebar Styles */
+        .sidebar { width: 280px; min-width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: sticky; top: 0; z-index: 90; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; border-bottom: 1px solid var(--sidebar-border); }
+        .sidebar-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .brand-logo-title { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.15rem; color: var(--text); text-decoration: none; }
+        .brand-icon { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; font-weight: 900; box-shadow: 0 4px 12px rgba(79,140,255,0.3); }
+        
+        .new-chat-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+        .new-chat-btn:hover { background: rgba(79, 140, 255, 0.15); border-color: var(--brand); color: white; }
+
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 16px; }
+        .sidebar-section { display: flex; flex-direction: column; gap: 6px; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 8px; color: var(--text); font-weight: 600; font-size: 0.95rem; cursor: pointer; user-select: none; border-radius: 8px; transition: background 0.15s ease; }
+        .section-header:hover { background: rgba(255,255,255,0.04); }
+        .section-header-title { display: flex; align-items: center; gap: 6px; }
+        .section-chevron { font-size: 0.8rem; color: var(--muted); transition: transform 0.2s ease; }
+        .section-header.collapsed .section-chevron { transform: rotate(-90deg); }
+        
+        .add-item-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; padding: 2px 6px; border-radius: 6px; }
+        .add-item-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+        .section-list { display: flex; flex-direction: column; gap: 2px; padding-left: 4px; }
+        .section-list.hidden { display: none; }
+        
+        .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; font-size: 0.86rem; color: var(--muted); text-decoration: none; cursor: pointer; transition: all 0.15s ease; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+        .nav-item.active { background: rgba(79, 140, 255, 0.18); color: white; font-weight: 600; border-left: 3px solid var(--brand); }
+        .nav-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .nav-item-actions { opacity: 0; transition: opacity 0.15s ease; display: flex; gap: 4px; }
+        .nav-item:hover .nav-item-actions { opacity: 1; }
+        .item-action-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px; font-size: 0.8rem; }
+        .item-action-btn:hover { color: var(--danger); }
+
+        /* Sidebar Footer / Profile Section */
+        .sidebar-footer { padding: 14px; border-top: 1px solid var(--sidebar-border); background: rgba(0,0,0,0.15); }
+        .profile-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; cursor: pointer; padding: 6px; border-radius: 12px; transition: background 0.15s ease; }
+        .profile-card:hover { background: rgba(255,255,255,0.05); }
+        .profile-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+        .profile-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 0.95rem; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
+        .profile-details { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .profile-name { font-weight: 700; font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-plan { font-size: 0.75rem; color: var(--muted); }
+        .upgrade-btn { white-space: nowrap; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.92); color: #0f172a; font-weight: 700; font-size: 0.76rem; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-family: inherit; }
+        .upgrade-btn:hover { background: #ffffff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.3); }
+
+        /* Main Content */
+        .app-main { flex: 1; min-width: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 18px; padding: 24px; max-width: 1100px; margin: 0 auto; min-height: 100vh; }
+
+        .mobile-header-bar { display: none; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--panel); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 8px; }
+        .sidebar-toggle-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 10px; font-size: 1.1rem; cursor: pointer; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 16px; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card { background: #101b2e; border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 440px; padding: 24px; box-shadow: 0 25px 60px rgba(0,0,0,0.5); transform: translateY(12px); transition: transform 0.2s ease; display: flex; flex-direction: column; gap: 16px; }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .modal-title { font-weight: 800; font-size: 1.1rem; color: var(--text); margin: 0; }
+        .modal-body { display: flex; flex-direction: column; gap: 14px; }
+        
+        .plan-option-card { border: 1px solid var(--border); border-radius: 16px; padding: 16px; background: rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 8px; transition: border-color 0.2s ease; }
+        .plan-option-card.pro { border-color: var(--brand); background: rgba(79, 140, 255, 0.08); }
+        .plan-price { font-size: 1.25rem; font-weight: 800; color: white; }
+        .plan-features { margin: 0; padding-left: 18px; font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+        .hero { position: relative; display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 22px; background: rgba(16,27,46,.82); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.28); backdrop-filter: blur(18px); }
         h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 3vw, 2.4rem); letter-spacing: -.04em; }
         .hero p { margin: 0; color: var(--muted); max-width: 680px; line-height: 1.6; }
-        .badge { white-space: nowrap; padding: 10px 14px; border-radius: 999px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 700; }
+        
+        .provider-menu-container { position: relative; }
+        .badge-btn { white-space: nowrap; padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 700; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 4px 14px rgba(79, 140, 255, 0.35); font-family: inherit; font-size: 0.95rem; }
+        .badge-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79, 140, 255, 0.5); }
+        .badge-btn:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+        .provider-dropdown-panel { position: absolute; top: calc(100% + 12px); right: 0; width: 320px; background: rgba(16, 27, 46, 0.96); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(20px); padding: 18px; z-index: 100; animation: fadeIn 0.15s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .dropdown-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+        .close-btn { background: transparent; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; padding: 0 4px; line-height: 1; }
+        .close-btn:hover { color: var(--text); }
+        .dropdown-body { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+        .dropdown-input { width: 100%; padding: 9px 12px; background: rgba(255, 255, 255, 0.07); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 0.88rem; outline: none; font-family: inherit; }
+        .dropdown-input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.2); }
+        .dropdown-input option { background: #101b2e; color: #eef5ff; }
+        .password-field { position: relative; display: flex; align-items: center; }
+        .password-field input { padding-right: 36px; }
+        .eye-btn { position: absolute; right: 8px; background: transparent; border: none; cursor: pointer; font-size: 0.9rem; opacity: 0.7; padding: 2px 4px; }
+        .eye-btn:hover { opacity: 1; }
+        .dropdown-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .save-btn { flex: 1; padding: 9px 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: white; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
+        .save-btn:hover { opacity: 0.9; }
+        .reset-btn { padding: 9px 14px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,0.05); color: var(--muted); font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
+        .reset-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+        .status-msg { font-size: 0.8rem; min-height: 18px; }
+        .status-msg.success { color: #4ade80; }
+        .status-msg.info { color: var(--muted); }
+
+        .model-check-badge { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease; white-space: nowrap; }
+        .model-check-badge.recommended { background: rgba(74, 222, 128, 0.16); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.35); }
+        .model-check-badge.custom { background: rgba(124, 58, 237, 0.18); color: #c084fc; border: 1px solid rgba(124, 58, 237, 0.35); }
+        .model-check-badge.default { background: rgba(255, 255, 255, 0.08); color: var(--muted); border: 1px solid var(--border); }
+
         #chat-window { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding: 20px; background: rgba(8,17,31,.72); border: 1px solid var(--border); border-radius: 24px; min-height: 420px; }
         .message { width: fit-content; max-width: min(82%, 760px); padding: 14px 16px; border-radius: 18px; line-height: 1.55; overflow-wrap: anywhere; box-shadow: 0 10px 35px rgba(0,0,0,.18); }
         .user-message { align-self: flex-end; background: linear-gradient(135deg, var(--brand), #2563eb); color: white; border-bottom-right-radius: 6px; }
         .bot-message { align-self: flex-start; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 6px; white-space: pre-wrap; }
-        .bot-message code { background: rgba(0,0,0,.28); padding: .16em .38em; border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; }
+        .bot-message code { background: rgba(0,0,0,.35); padding: .16em .38em; border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em; }
+        .bot-message pre { background: rgba(0,0,0,.45); padding: 12px 16px; border-radius: 12px; overflow-x: auto; border: 1px solid var(--border); margin: 8px 0; }
+        .bot-message pre code { background: transparent; padding: 0; }
         .status { color: var(--muted); font-size: .95rem; }
         #input-area { display: flex; gap: 12px; padding: 14px; background: rgba(16,27,46,.86); border: 1px solid var(--border); border-radius: 24px; }
         #user-input { flex: 1; min-height: 52px; resize: vertical; padding: 14px 16px; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.06); color: var(--text); font: inherit; outline: none; }
@@ -26,43 +129,827 @@
         #send-btn { border: 0; border-radius: 18px; padding: 0 22px; color: white; background: linear-gradient(135deg, var(--brand), var(--brand-2)); font-weight: 800; cursor: pointer; }
         #send-btn:disabled { cursor: not-allowed; opacity: .55; }
         .error { color: var(--danger); }
-        @media (max-width: 720px) { main { padding: 12px; } .hero { align-items: flex-start; flex-direction: column; } #input-area { flex-direction: column; } #send-btn { min-height: 48px; } .message { max-width: 94%; } }
+        @media (max-width: 860px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); width: 280px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-header-bar { display: flex; }
+            .app-main { padding: 14px; width: 100%; max-width: 100%; }
+            .hero { align-items: flex-start; flex-direction: column; }
+            #input-area { flex-direction: column; }
+            #send-btn { min-height: 48px; }
+            .message { max-width: 94%; }
+            .provider-dropdown-panel { right: auto; left: 0; width: 100%; max-width: 320px; }
+        }
     </style>
 </head>
 <body>
-    <main>
-        <header class="hero">
-            <div>
-                <h1>Assembler-AI</h1>
-                <p>Asistente especializado en ensamblador x86, optimización de bajo nivel y depuración. Backend preparado para Gemini, OpenAI, Anthropic y proveedores compatibles.</p>
+    <div class="app-layout">
+        <!-- Sidebar Panel Izquierdo -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <a href="#" class="brand-logo-title">
+                        <div class="brand-icon">⚡</div>
+                        <span>Assembler-AI</span>
+                    </a>
+                </div>
+                <button type="button" id="sidebar-new-chat-btn" class="new-chat-btn">
+                    <span>+</span> Nuevo Chat
+                </button>
             </div>
-            <span class="badge">Multi‑LLM</span>
-        </header>
 
-        <section id="chat-window" aria-live="polite" aria-label="Conversación con Assembler-AI">
-            <div class="message bot-message">¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?</div>
-        </section>
+            <div class="sidebar-content">
+                <!-- Sección Proyectos -->
+                <div class="sidebar-section">
+                    <div id="projects-section-header" class="section-header">
+                        <div class="section-header-title">
+                            <span>Proyectos</span>
+                            <span class="section-chevron">›</span>
+                        </div>
+                        <button type="button" id="add-project-btn" class="add-item-btn" title="Nuevo Proyecto">+</button>
+                    </div>
+                    <div id="projects-list" class="section-list">
+                        <!-- Proyectos cargados dinámicamente -->
+                    </div>
+                </div>
 
-        <form id="input-area" autocomplete="off">
-            <textarea id="user-input" rows="2" maxlength="8000" placeholder="Escribe tu pregunta sobre ASM aquí..." aria-label="Mensaje para el asistente"></textarea>
-            <button id="send-btn" type="submit">Enviar</button>
-        </form>
-    </main>
+                <!-- Sección Chats -->
+                <div class="sidebar-section">
+                    <div id="chats-section-header" class="section-header">
+                        <div class="section-header-title">
+                            <span>Chats</span>
+                            <span class="section-chevron">›</span>
+                        </div>
+                        <button type="button" id="add-chat-btn" class="add-item-btn" title="Nuevo Chat">+</button>
+                    </div>
+                    <div id="chats-list" class="section-list">
+                        <!-- Chats cargados dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perfil de Usuario en Parte Inferior -->
+            <div class="sidebar-footer">
+                <div id="user-profile-trigger" class="profile-card" title="Perfil y Ajustes de Cuenta">
+                    <div class="profile-info">
+                        <div id="user-avatar" class="profile-avatar">
+                            <span id="user-avatar-initial">F</span>
+                        </div>
+                        <div class="profile-details">
+                            <span id="user-name-display" class="profile-name">Fundacion ...</span>
+                            <span id="user-plan-display" class="profile-plan">Gratis</span>
+                        </div>
+                    </div>
+                    <button type="button" id="upgrade-plan-btn" class="upgrade-btn">Mejorar el plan</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="app-main">
+            <div class="mobile-header-bar">
+                <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn" aria-label="Abrir Menú">☰</button>
+                <div style="font-weight: 800; font-size: 1rem;">Assembler-AI</div>
+                <button type="button" id="mobile-new-chat-btn" class="add-item-btn" style="font-size:1.2rem; padding: 4px 8px;" title="Nuevo Chat">+</button>
+            </div>
+
+            <header class="hero">
+                <div>
+                    <h1>Assembler-AI</h1>
+                    <p>Asistente especializado en ensamblador x86, optimización de bajo nivel y depuración. Backend preparado para Gemini, OpenAI, Anthropic y proveedores compatibles.</p>
+                </div>
+                <div class="provider-menu-container">
+                    <button id="provider-toggle-btn" type="button" class="badge-btn" aria-expanded="false" aria-controls="provider-dropdown">
+                        <span id="current-provider-badge">Multi‑LLM ▾</span>
+                    </button>
+                    
+                    <div id="provider-dropdown" class="provider-dropdown-panel" hidden>
+                        <div class="dropdown-header">
+                            <span class="dropdown-title">⚙️ Proveedor LLM & Key</span>
+                            <button id="close-dropdown-btn" type="button" class="close-btn" aria-label="Cerrar">&times;</button>
+                        </div>
+                        
+                        <div class="dropdown-body">
+                            <div class="form-group">
+                                <label for="provider-select">Proveedor de IA:</label>
+                                <select id="provider-select" class="dropdown-input">
+                                    <option value="gemini">Google Gemini</option>
+                                    <option value="openai">OpenAI (ChatGPT)</option>
+                                    <option value="anthropic">Anthropic (Claude)</option>
+                                    <option value="openai_compatible">OpenAI Compatible (Groq/Ollama/Local)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="api-key-input">API Key (Clave de API):</label>
+                                <div class="password-field">
+                                    <input type="password" id="api-key-input" class="dropdown-input" placeholder="Ej: AIzaSy... o sk-..." />
+                                    <button type="button" id="toggle-key-visibility" class="eye-btn" title="Mostrar/Ocultar API Key">👁️</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <label for="model-recommend-select">Modelo (Recomendados x86):</label>
+                                    <span id="model-check-badge" class="model-check-badge default">ℹ️ Defecto</span>
+                                </div>
+                                <select id="model-recommend-select" class="dropdown-input">
+                                    <!-- Opciones cargadas dinámicamente -->
+                                </select>
+                                <input type="text" id="model-input" class="dropdown-input" style="margin-top: 4px;" placeholder="O escribe el modelo personalizado..." />
+                            </div>
+
+                            <div class="form-group" id="base-url-group">
+                                <label for="base-url-input">URL Base (opcional):</label>
+                                <input type="text" id="base-url-input" class="dropdown-input" placeholder="Ej: https://api.groq.com/openai/v1" />
+                            </div>
+
+                            <div id="config-status-msg" class="status-msg"></div>
+
+                            <div class="dropdown-actions">
+                                <button type="button" id="save-config-btn" class="save-btn">Guardar</button>
+                                <button type="button" id="reset-config-btn" class="reset-btn">Usar Servidor</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <section id="chat-window" aria-live="polite" aria-label="Conversación con Assembler-AI">
+                <div class="message bot-message">¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?</div>
+            </section>
+
+            <form id="input-area" autocomplete="off">
+                <textarea id="user-input" rows="2" maxlength="8000" placeholder="Escribe tu pregunta sobre ASM aquí..." aria-label="Mensaje para el asistente"></textarea>
+                <button id="send-btn" type="submit">Enviar</button>
+            </form>
+        </main>
+    </div>
+
+    <!-- Modal Login / Perfil -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 Cuenta & Perfil</h3>
+                <button type="button" class="close-btn modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="login-name-input">Nombre o Organización:</label>
+                    <input type="text" id="login-name-input" class="dropdown-input" placeholder="Ej: Fundación ..." />
+                </div>
+                <div class="form-group">
+                    <label for="login-email-input">Correo Electrónico:</label>
+                    <input type="email" id="login-email-input" class="dropdown-input" placeholder="contacto@fundacion.org" />
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                    <button type="button" id="save-profile-btn" class="save-btn">Guardar Perfil</button>
+                    <button type="button" id="quick-demo-user-btn" class="reset-btn">Login Rápido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear Proyecto -->
+    <div id="project-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">📦 Nuevo Proyecto ASM</h3>
+                <button type="button" class="close-btn modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="project-name-input">Nombre del Proyecto:</label>
+                    <input type="text" id="project-name-input" class="dropdown-input" placeholder="Ej: Kernel Bootloader x86" />
+                </div>
+                <div class="form-group">
+                    <label for="project-desc-input">Descripción / Arquitectura (opcional):</label>
+                    <input type="text" id="project-desc-input" class="dropdown-input" placeholder="Ej: Ensamblador 16-bit / Real Mode" />
+                </div>
+                <button type="button" id="save-project-btn" class="save-btn" style="margin-top: 8px;">Crear Proyecto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mejorar Plan -->
+    <div id="plan-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">🚀 Mejorar el Plan</h3>
+                <button type="button" class="close-btn modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="plan-option-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>Plan Gratis</strong>
+                        <span style="font-size:0.78rem; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:999px;">Actual</span>
+                    </div>
+                    <div class="plan-price">$0 / mes</div>
+                    <ul class="plan-features">
+                        <li>Soporte para proyectos y chats ilimitados</li>
+                        <li>Acceso a modelos Gemini, OpenAI y Anthropic</li>
+                        <li>Configuración de API Key personal</li>
+                    </ul>
+                </div>
+
+                <div class="plan-option-card pro">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:#a78bfa;">Plan Pro Assembler</strong>
+                        <span style="font-size:0.78rem; background:var(--brand); color:white; padding:2px 8px; border-radius:999px; font-weight:700;">Recomendado</span>
+                    </div>
+                    <div class="plan-price">$19 <span style="font-size:0.85rem; font-weight:normal; color:var(--muted);">/ mes</span></div>
+                    <ul class="plan-features">
+                        <li>Respuestas prioritarias de baja latencia</li>
+                        <li>Analizador y optimizador de binarios e instrucciones SIMD/AVX-512</li>
+                        <li>Soporte de proyectos en equipo y exportación PDF/ASM</li>
+                    </ul>
+                    <button type="button" id="select-pro-btn" class="save-btn" style="margin-top: 6px;">Obtener Plan Pro</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
+        // DOM Elements
         const chatWindow = document.getElementById('chat-window');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const inputArea = document.getElementById('input-area');
 
+        // Sidebar & Mobile Elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        const sidebarNewChatBtn = document.getElementById('sidebar-new-chat-btn');
+        const mobileNewChatBtn = document.getElementById('mobile-new-chat-btn');
+        
+        const projectsSectionHeader = document.getElementById('projects-section-header');
+        const projectsList = document.getElementById('projects-list');
+        const addProjectBtn = document.getElementById('add-project-btn');
+
+        const chatsSectionHeader = document.getElementById('chats-section-header');
+        const chatsList = document.getElementById('chats-list');
+        const addChatBtn = document.getElementById('add-chat-btn');
+
+        const userProfileTrigger = document.getElementById('user-profile-trigger');
+        const userNameDisplay = document.getElementById('user-name-display');
+        const userPlanDisplay = document.getElementById('user-plan-display');
+        const userAvatarInitial = document.getElementById('user-avatar-initial');
+        const upgradePlanBtn = document.getElementById('upgrade-plan-btn');
+
+        // Modals
+        const loginModal = document.getElementById('login-modal');
+        const loginNameInput = document.getElementById('login-name-input');
+        const loginEmailInput = document.getElementById('login-email-input');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const quickDemoUserBtn = document.getElementById('quick-demo-user-btn');
+
+        const projectModal = document.getElementById('project-modal');
+        const projectNameInput = document.getElementById('project-name-input');
+        const projectDescInput = document.getElementById('project-desc-input');
+        const saveProjectBtn = document.getElementById('save-project-btn');
+
+        const planModal = document.getElementById('plan-modal');
+        const selectProBtn = document.getElementById('select-pro-btn');
+
+        // Dropdown elements
+        const providerToggleBtn = document.getElementById('provider-toggle-btn');
+        const currentProviderBadge = document.getElementById('current-provider-badge');
+        const providerDropdown = document.getElementById('provider-dropdown');
+        const closeDropdownBtn = document.getElementById('close-dropdown-btn');
+        const providerSelect = document.getElementById('provider-select');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const modelRecommendSelect = document.getElementById('model-recommend-select');
+        const modelInput = document.getElementById('model-input');
+        const modelCheckBadge = document.getElementById('model-check-badge');
+        const baseUrlInput = document.getElementById('base-url-input');
+        const toggleKeyVisibilityBtn = document.getElementById('toggle-key-visibility');
+        const saveConfigBtn = document.getElementById('save-config-btn');
+        const resetConfigBtn = document.getElementById('reset-config-btn');
+        const configStatusMsg = document.getElementById('config-status-msg');
+
+        // Initial Data Defaults
+        const DEFAULT_USER = {
+            name: 'Fundacion ...',
+            email: 'contacto@fundacion.org',
+            plan: 'Gratis'
+        };
+
+        const DEFAULT_PROJECTS = [
+            { id: 'p1', name: '📦 Proyecto ASM x86', desc: 'Asistente general de ensamblador' },
+            { id: 'p2', name: '⚡ Filtro SIMD AVX2', desc: 'Procesamiento rápido de imágenes' },
+            { id: 'p3', name: '🛡️ Kernel Bootloader', desc: 'Modo Real 16-bit' }
+        ];
+
+        const DEFAULT_CHATS = [
+            {
+                id: 'c1',
+                projectId: 'p1',
+                title: 'Conversación Principal',
+                messages: [
+                    { sender: 'bot', text: '¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?' }
+                ]
+            }
+        ];
+
+        // Global App State
+        let currentUser = loadStorage('assembler_ai_user', DEFAULT_USER);
+        let projects = loadStorage('assembler_ai_projects', DEFAULT_PROJECTS);
+        let chats = loadStorage('assembler_ai_chats', DEFAULT_CHATS);
+        let activeProjectId = projects[0]?.id || 'p1';
+        let activeChatId = chats[0]?.id || 'c1';
+
+        function loadStorage(key, fallback) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        function saveStorage(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {}
+        }
+
+        // --- User Profile & Modal Handlers ---
+        function renderUserProfile() {
+            userNameDisplay.innerText = currentUser.name || 'Fundacion ...';
+            userPlanDisplay.innerText = currentUser.plan || 'Gratis';
+            userAvatarInitial.innerText = (currentUser.name || 'F').charAt(0).toUpperCase();
+        }
+
+        function openModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const modal = e.target.closest('.modal-overlay');
+                if (modal) closeModal(modal);
+            });
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeModal(overlay);
+            });
+        });
+
+        userProfileTrigger.addEventListener('click', (e) => {
+            if (e.target.closest('#upgrade-plan-btn')) return;
+            loginNameInput.value = currentUser.name || '';
+            loginEmailInput.value = currentUser.email || '';
+            openModal(loginModal);
+        });
+
+        upgradePlanBtn.addEventListener('click', () => {
+            openModal(planModal);
+        });
+
+        saveProfileBtn.addEventListener('click', () => {
+            currentUser.name = loginNameInput.value.trim() || 'Fundacion ...';
+            currentUser.email = loginEmailInput.value.trim() || 'contacto@fundacion.org';
+            saveStorage('assembler_ai_user', currentUser);
+            renderUserProfile();
+            closeModal(loginModal);
+        });
+
+        quickDemoUserBtn.addEventListener('click', () => {
+            currentUser = { name: 'Fundacion ...', email: 'contacto@fundacion.org', plan: 'Gratis' };
+            saveStorage('assembler_ai_user', currentUser);
+            renderUserProfile();
+            closeModal(loginModal);
+        });
+
+        selectProBtn.addEventListener('click', () => {
+            currentUser.plan = 'Pro ASM';
+            saveStorage('assembler_ai_user', currentUser);
+            renderUserProfile();
+            alert('¡Felicidades! Se ha activado el Plan Pro Assembler.');
+            closeModal(planModal);
+        });
+
+        // --- Projects & Chats Management ---
+        function renderProjects() {
+            projectsList.innerHTML = '';
+            projects.forEach(p => {
+                const item = document.createElement('div');
+                item.className = `nav-item ${p.id === activeProjectId ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span class="nav-item-title" title="${p.name}">${p.name}</span>
+                    <div class="nav-item-actions">
+                        ${projects.length > 1 ? `<button type="button" class="item-action-btn delete-proj" title="Eliminar">&times;</button>` : ''}
+                    </div>
+                `;
+                
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-proj')) {
+                        e.stopPropagation();
+                        deleteProject(p.id);
+                        return;
+                    }
+                    activeProjectId = p.id;
+                    renderProjects();
+                    renderChats();
+                });
+
+                projectsList.appendChild(item);
+            });
+        }
+
+        function addProject(name, desc) {
+            const newProj = {
+                id: 'p_' + Date.now(),
+                name: name || 'Nuevo Proyecto ASM',
+                desc: desc || ''
+            };
+            projects.push(newProj);
+            activeProjectId = newProj.id;
+            saveStorage('assembler_ai_projects', projects);
+            renderProjects();
+            createNewChat();
+        }
+
+        function deleteProject(id) {
+            projects = projects.filter(p => p.id !== id);
+            saveStorage('assembler_ai_projects', projects);
+            if (activeProjectId === id) {
+                activeProjectId = projects[0]?.id || 'p1';
+            }
+            renderProjects();
+            renderChats();
+        }
+
+        addProjectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            projectNameInput.value = '';
+            projectDescInput.value = '';
+            openModal(projectModal);
+        });
+
+        saveProjectBtn.addEventListener('click', () => {
+            const name = projectNameInput.value.trim();
+            const desc = projectDescInput.value.trim();
+            if (name) {
+                addProject(name, desc);
+                closeModal(projectModal);
+            }
+        });
+
+        function renderChats() {
+            chatsList.innerHTML = '';
+            const projChats = chats.filter(c => !c.projectId || c.projectId === activeProjectId);
+            
+            projChats.forEach(c => {
+                const item = document.createElement('div');
+                item.className = `nav-item ${c.id === activeChatId ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span class="nav-item-title" title="${c.title}">${c.title}</span>
+                    <div class="nav-item-actions">
+                        ${chats.length > 1 ? `<button type="button" class="item-action-btn delete-chat" title="Eliminar">&times;</button>` : ''}
+                    </div>
+                `;
+
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-chat')) {
+                        e.stopPropagation();
+                        deleteChat(c.id);
+                        return;
+                    }
+                    switchChat(c.id);
+                });
+
+                chatsList.appendChild(item);
+            });
+        }
+
+        function createNewChat() {
+            const newChat = {
+                id: 'c_' + Date.now(),
+                projectId: activeProjectId,
+                title: 'Nuevo Chat ASM',
+                messages: [
+                    { sender: 'bot', text: '¡Hola! Soy tu asistente experto en Lenguaje Ensamblador x86. ¿En qué puedo ayudarte hoy?' }
+                ]
+            };
+            chats.unshift(newChat);
+            activeChatId = newChat.id;
+            saveStorage('assembler_ai_chats', chats);
+            renderChats();
+            loadActiveChatMessages();
+            if (window.innerWidth <= 860) sidebar.classList.remove('open');
+        }
+
+        function switchChat(chatId) {
+            activeChatId = chatId;
+            renderChats();
+            loadActiveChatMessages();
+            if (window.innerWidth <= 860) sidebar.classList.remove('open');
+        }
+
+        function deleteChat(chatId) {
+            chats = chats.filter(c => c.id !== chatId);
+            if (chats.length === 0) {
+                createNewChat();
+                return;
+            }
+            saveStorage('assembler_ai_chats', chats);
+            if (activeChatId === chatId) {
+                activeChatId = chats[0].id;
+            }
+            renderChats();
+            loadActiveChatMessages();
+        }
+
+        function loadActiveChatMessages() {
+            chatWindow.innerHTML = '';
+            const chat = chats.find(c => c.id === activeChatId);
+            if (!chat) return;
+
+            chat.messages.forEach(msg => {
+                addMessageToDOM(msg.text, msg.sender, msg.extraClass || '');
+            });
+        }
+
+        sidebarNewChatBtn.addEventListener('click', createNewChat);
+        mobileNewChatBtn.addEventListener('click', createNewChat);
+        addChatBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            createNewChat();
+        });
+
+        // Toggle Expand / Collapse Accordions
+        projectsSectionHeader.addEventListener('click', () => {
+            projectsSectionHeader.classList.toggle('collapsed');
+            projectsList.classList.toggle('hidden');
+        });
+
+        chatsSectionHeader.addEventListener('click', () => {
+            chatsSectionHeader.classList.toggle('collapsed');
+            chatsList.classList.toggle('hidden');
+        });
+
+        // Mobile Sidebar Toggle
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        // --- Multi-LLM Provider Config ---
+        const PROVIDER_NAMES = {
+            gemini: 'Gemini',
+            openai: 'OpenAI',
+            anthropic: 'Anthropic',
+            openai_compatible: 'Custom / Groq'
+        };
+
+        const API_KEY_PLACEHOLDERS = {
+            gemini: 'Ej: AIzaSy...',
+            openai: 'Ej: sk-proj-...',
+            anthropic: 'Ej: sk-ant-...',
+            openai_compatible: 'Clave API del proveedor compatible'
+        };
+
+        const RECOMMENDED_MODELS = {
+            gemini: [
+                { id: 'gemini-3.6-flash', label: 'gemini-3.6-flash (Recomendado x86 🔥)' },
+                { id: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Excelente velocidad)' },
+                { id: 'gemini-2.5-pro', label: 'gemini-2.5-pro (Análisis avanzado ASM)' },
+                { id: 'gemini-1.5-pro', label: 'gemini-1.5-pro (Listados largos)' }
+            ],
+            openai: [
+                { id: 'gpt-4o', label: 'gpt-4o (Recomendado x86 🔥)' },
+                { id: 'gpt-4o-mini', label: 'gpt-4o-mini (Rápido y eficiente)' },
+                { id: 'o3-mini', label: 'o3-mini (Razonamiento profundo)' }
+            ],
+            anthropic: [
+                { id: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet (Recomendado x86 🔥)' },
+                { id: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku (Respuestas rápidas)' }
+            ],
+            openai_compatible: [
+                { id: 'llama-3.3-70b-versatile', label: 'llama-3.3-70b (Recomendado Groq 🔥)' },
+                { id: 'deepseek-r1-distill-llama-70b', label: 'deepseek-r1-distill-llama-70b' },
+                { id: 'qwen2.5-coder-32b-instruct', label: 'qwen2.5-coder-32b-instruct' }
+            ]
+        };
+
+        function getStoredConfig() {
+            try {
+                const stored = localStorage.getItem('assembler_ai_llm_config');
+                return stored ? JSON.parse(stored) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function setStoredConfig(config) {
+            try {
+                if (!config) {
+                    localStorage.removeItem('assembler_ai_llm_config');
+                } else {
+                    localStorage.setItem('assembler_ai_llm_config', JSON.stringify(config));
+                }
+            } catch (e) {}
+        }
+
+        function updateBadgeLabel() {
+            const config = getStoredConfig();
+            if (config && config.provider) {
+                const name = PROVIDER_NAMES[config.provider] || config.provider;
+                const hasKey = !!config.apiKey;
+                currentProviderBadge.innerText = `⚡ ${name}${hasKey ? ' (Key)' : ''} ▾`;
+            } else {
+                currentProviderBadge.innerText = 'Multi‑LLM ▾';
+            }
+        }
+
+        function updateModelRecommendations(preserveInputValue = false) {
+            const provider = providerSelect.value;
+            const models = RECOMMENDED_MODELS[provider] || [];
+            
+            modelRecommendSelect.innerHTML = '';
+            
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.innerText = '-- Usar modelo por defecto del servidor --';
+            modelRecommendSelect.appendChild(defaultOpt);
+
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = `✓ ${m.label}`;
+                modelRecommendSelect.appendChild(opt);
+            });
+
+            const customOpt = document.createElement('option');
+            customOpt.value = 'custom_manual';
+            customOpt.innerText = '✏️ Otro modelo (Escribir manualmente)...';
+            modelRecommendSelect.appendChild(customOpt);
+
+            const currentValue = modelInput.value.trim();
+            const matched = models.find(m => m.id === currentValue);
+
+            if (matched) {
+                modelRecommendSelect.value = matched.id;
+            } else if (currentValue) {
+                modelRecommendSelect.value = 'custom_manual';
+            } else {
+                modelRecommendSelect.value = '';
+            }
+
+            updateModelValidationBadge();
+        }
+
+        function updateModelValidationBadge() {
+            const val = modelInput.value.trim();
+            const provider = providerSelect.value;
+            const models = RECOMMENDED_MODELS[provider] || [];
+            const isRecommended = models.some(m => m.id === val);
+
+            if (isRecommended) {
+                modelCheckBadge.className = 'model-check-badge recommended';
+                modelCheckBadge.innerText = '✓ Recomendado x86';
+            } else if (val.length > 0) {
+                modelCheckBadge.className = 'model-check-badge custom';
+                modelCheckBadge.innerText = '✓ Personalizado';
+            } else {
+                modelCheckBadge.className = 'model-check-badge default';
+                modelCheckBadge.innerText = 'ℹ️ Defecto';
+            }
+        }
+
+        function initConfigUI() {
+            const config = getStoredConfig() || {};
+            providerSelect.value = config.provider || 'gemini';
+            apiKeyInput.value = config.apiKey || '';
+            modelInput.value = config.customModel || '';
+            baseUrlInput.value = config.customBaseUrl || '';
+            updatePlaceholders();
+            updateModelRecommendations(true);
+            updateBadgeLabel();
+        }
+
+        function updatePlaceholders() {
+            const provider = providerSelect.value;
+            apiKeyInput.placeholder = API_KEY_PLACEHOLDERS[provider] || 'Ingresa tu API Key...';
+        }
+
+        function toggleDropdown(show) {
+            const isHidden = providerDropdown.hasAttribute('hidden');
+            const shouldShow = typeof show === 'boolean' ? show : isHidden;
+            if (shouldShow) {
+                providerDropdown.removeAttribute('hidden');
+                providerToggleBtn.setAttribute('aria-expanded', 'true');
+            } else {
+                providerDropdown.setAttribute('hidden', '');
+                providerToggleBtn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        providerToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown();
+        });
+
+        closeDropdownBtn.addEventListener('click', () => toggleDropdown(false));
+
+        document.addEventListener('click', (e) => {
+            if (!providerDropdown.contains(e.target) && e.target !== providerToggleBtn && !providerToggleBtn.contains(e.target)) {
+                toggleDropdown(false);
+            }
+        });
+
+        providerSelect.addEventListener('change', () => {
+            updatePlaceholders();
+            updateModelRecommendations();
+        });
+
+        modelRecommendSelect.addEventListener('change', () => {
+            const val = modelRecommendSelect.value;
+            if (val && val !== 'custom_manual') {
+                modelInput.value = val;
+            } else if (val === 'custom_manual') {
+                modelInput.focus();
+            } else {
+                modelInput.value = '';
+            }
+            updateModelValidationBadge();
+        });
+
+        modelInput.addEventListener('input', () => {
+            const val = modelInput.value.trim();
+            const provider = providerSelect.value;
+            const models = RECOMMENDED_MODELS[provider] || [];
+            const matched = models.find(m => m.id === val);
+
+            if (matched) {
+                modelRecommendSelect.value = matched.id;
+            } else if (val) {
+                modelRecommendSelect.value = 'custom_manual';
+            } else {
+                modelRecommendSelect.value = '';
+            }
+
+            updateModelValidationBadge();
+        });
+
+        toggleKeyVisibilityBtn.addEventListener('click', () => {
+            const isPassword = apiKeyInput.type === 'password';
+            apiKeyInput.type = isPassword ? 'text' : 'password';
+            toggleKeyVisibilityBtn.innerText = isPassword ? '🙈' : '👁️';
+        });
+
+        saveConfigBtn.addEventListener('click', () => {
+            const config = {
+                provider: providerSelect.value,
+                apiKey: apiKeyInput.value.trim(),
+                customModel: modelInput.value.trim(),
+                customBaseUrl: baseUrlInput.value.trim()
+            };
+            setStoredConfig(config);
+            updateBadgeLabel();
+            configStatusMsg.className = 'status-msg success';
+            configStatusMsg.innerText = '✓ Configuración guardada localmente';
+            setTimeout(() => {
+                configStatusMsg.innerText = '';
+                toggleDropdown(false);
+            }, 1200);
+        });
+
+        resetConfigBtn.addEventListener('click', () => {
+            setStoredConfig(null);
+            providerSelect.value = 'gemini';
+            apiKeyInput.value = '';
+            modelInput.value = '';
+            baseUrlInput.value = '';
+            updatePlaceholders();
+            updateModelRecommendations();
+            updateBadgeLabel();
+            configStatusMsg.className = 'status-msg info';
+            configStatusMsg.innerText = 'ℹ️ Usando configuración por defecto del servidor';
+            setTimeout(() => {
+                configStatusMsg.innerText = '';
+            }, 2000);
+        });
+
+        // --- Chat Formatting & Sending ---
         function formatBotText(text) {
             const escaped = text.replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
             return escaped
+                .replace(/```(?:[a-z0-9]+)?\n?([\s\S]*?)```/gi, '<pre><code>$1</code></pre>')
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         }
 
-        function addMessage(text, sender, extraClass = '') {
+        function addMessageToDOM(text, sender, extraClass = '') {
             const messageElement = document.createElement('div');
             messageElement.className = `message ${sender}-message ${extraClass}`.trim();
             messageElement.innerHTML = sender === 'bot' ? formatBotText(text) : '';
@@ -70,6 +957,24 @@
             chatWindow.appendChild(messageElement);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             return messageElement;
+        }
+
+        function addMessage(text, sender, extraClass = '') {
+            const el = addMessageToDOM(text, sender, extraClass);
+
+            if (extraClass !== 'status') {
+                const chat = chats.find(c => c.id === activeChatId);
+                if (chat) {
+                    chat.messages.push({ sender, text, extraClass });
+                    if (sender === 'user' && (chat.title === 'Nuevo Chat ASM' || chat.title === 'Conversación Principal')) {
+                        chat.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
+                        renderChats();
+                    }
+                    saveStorage('assembler_ai_chats', chats);
+                }
+            }
+
+            return el;
         }
 
         async function handleSend(event) {
@@ -80,23 +985,40 @@
             addMessage(messageText, 'user');
             userInput.value = '';
             sendBtn.disabled = true;
-            const typingIndicator = addMessage('Analizando y generando respuesta...', 'bot', 'status');
+            const typingIndicator = addMessageToDOM('Analizando y generando respuesta...', 'bot', 'status');
+
+            const storedConfig = getStoredConfig();
+            const payload = {
+                message: messageText
+            };
+            if (storedConfig) {
+                if (storedConfig.provider) payload.provider = storedConfig.provider;
+                if (storedConfig.apiKey) payload.apiKey = storedConfig.apiKey;
+                if (storedConfig.customModel) payload.customModel = storedConfig.customModel;
+                if (storedConfig.customBaseUrl) payload.customBaseUrl = storedConfig.customBaseUrl;
+            }
 
             try {
                 const response = await fetch('api_handler.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: messageText })
+                    body: JSON.stringify(payload)
                 });
                 const data = await response.json().catch(() => ({}));
                 typingIndicator.remove();
 
                 if (!response.ok || data.error) {
-                    addMessage(data.error || `Error del servidor: ${response.status}`, 'bot', 'error');
+                    const errorText = data.error || (data.details ? `Error: ${data.details}` : `Error del servidor: ${response.status}`);
+                    addMessage(errorText, 'bot', 'error');
                     return;
                 }
 
-                addMessage(data.reply || 'No se recibió contenido del proveedor LLM.', 'bot');
+                if (!data.reply || !data.reply.trim()) {
+                    addMessage('El proveedor LLM devolvió una respuesta vacía.', 'bot', 'error');
+                    return;
+                }
+
+                addMessage(data.reply, 'bot');
             } catch (error) {
                 typingIndicator.remove();
                 addMessage(`Error de conexión: ${error.message}`, 'bot', 'error');
@@ -110,6 +1032,13 @@
         userInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) handleSend(event);
         });
+
+        // Initialize App UI
+        renderUserProfile();
+        renderProjects();
+        renderChats();
+        loadActiveChatMessages();
+        initConfigUI();
     </script>
 </body>
 </html>
