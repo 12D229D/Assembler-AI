@@ -217,7 +217,7 @@
             <header class="hero">
                 <div>
                     <h1>Assembler-AI</h1>
-                    <p>Asistente especializado en ensamblador x86, optimización de bajo nivel y depuración. Backend preparado para Gemini, OpenAI, Anthropic y proveedores compatibles.</p>
+                    <p>Asistente especializado en ensamblador x86, optimización de bajo nivel y depuración. Backend preparado para Gemini, OpenAI, Anthropic, Mistral y proveedores compatibles.</p>
                 </div>
                 <div class="provider-menu-container">
                     <button id="provider-toggle-btn" type="button" class="badge-btn" aria-expanded="false" aria-controls="provider-dropdown">
@@ -237,6 +237,7 @@
                                     <option value="gemini">Google Gemini</option>
                                     <option value="openai">OpenAI (ChatGPT)</option>
                                     <option value="anthropic">Anthropic (Claude)</option>
+                                    <option value="mistral">Mistral AI</option>
                                     <option value="openai_compatible">OpenAI Compatible (Groq/Ollama/Local)</option>
                                 </select>
                             </div>
@@ -708,6 +709,7 @@
             gemini: 'Gemini',
             openai: 'OpenAI',
             anthropic: 'Anthropic',
+            mistral: 'Mistral AI',
             openai_compatible: 'Custom / Groq'
         };
 
@@ -715,6 +717,7 @@
             gemini: 'Ej: AIzaSy...',
             openai: 'Ej: sk-proj-...',
             anthropic: 'Ej: sk-ant-...',
+            mistral: 'Ej: mistral-...',
             openai_compatible: 'Clave API del proveedor compatible'
         };
 
@@ -733,6 +736,11 @@
             anthropic: [
                 { id: 'claude-3-5-sonnet-latest', label: 'claude-3-5-sonnet (Recomendado x86 🔥)' },
                 { id: 'claude-3-5-haiku-latest', label: 'claude-3-5-haiku (Respuestas rápidas)' }
+            ],
+            mistral: [
+                { id: 'codestral-latest', label: 'codestral-latest (Especializado Código 🔥)' },
+                { id: 'mistral-large-latest', label: 'mistral-large-latest (Máxima capacidad)' },
+                { id: 'mistral-small-latest', label: 'mistral-small-latest (Rápido y liviano)' }
             ],
             openai_compatible: [
                 { id: 'llama-3.3-70b-versatile', label: 'llama-3.3-70b (Recomendado Groq 🔥)' },

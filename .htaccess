@@ -1,0 +1,17 @@
+# Configuración Apache / cPanel para Assembler-AI
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Redirigir peticiones de /api/chat a api_handler.php en PHP
+    RewriteRule ^api/chat/?$ api_handler.php [L,QSA]
+</IfModule>
+
+# Encabezados de seguridad y CORS opcionales
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+</IfModule>

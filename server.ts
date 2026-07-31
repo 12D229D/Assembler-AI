@@ -268,6 +268,22 @@ async function handleChat(req: express.Request, res: express.Response) {
       case 'anthropic':
         reply = await generateWithAnthropic(message, config.systemPrompt, config, clientApiKey, customModel, customBaseUrl);
         break;
+      case 'mistral':
+        reply = await generateWithOpenAi(
+          message,
+          config.systemPrompt,
+          config,
+          'Mistral',
+          'MISTRAL_API_BASE',
+          'MISTRAL_API_KEY',
+          'MISTRAL_MODEL',
+          'https://api.mistral.ai/v1',
+          'codestral-latest',
+          clientApiKey,
+          customModel,
+          customBaseUrl
+        );
+        break;
       case 'openai_compatible':
         reply = await generateWithOpenAi(
           message,
