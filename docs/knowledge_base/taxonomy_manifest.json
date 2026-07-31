@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Assembler-AI Knowledge Base Taxonomy Manifest",
+  "version": "1.0.0",
+  "description": "Manifiesto estructurado de la Base de Conocimiento Interna de Assembler-AI para indexación, RAG y consulta técnica.",
+  "categories": [
+    {
+      "id": "x86",
+      "tag": "x86",
+      "name": "Arquitectura x86 General",
+      "shortDescription": "Arquitectura de microprocesadores de 16 y 32 bits (y su ecosistema general) iniciada por Intel con la familia 8086.",
+      "file": "x86.md",
+      "level": "Arquitectura General",
+      "relatedTags": ["x86-16", "x86-32", "x86-assembly", "x86-x64"]
+    },
+    {
+      "id": "x86-128",
+      "tag": "x86-128",
+      "name": "Arquitecturas Conceptuales / Extensiones 128-bit",
+      "shortDescription": "Referencia o término general asociado a arquitecturas futuras o conceptuales de 128 bits basadas en el legado x86.",
+      "file": "x86_128.md",
+      "level": "Prospectiva / Conceptual",
+      "relatedTags": ["x86-64", "x86-x64"]
+    },
+    {
+      "id": "x86-16",
+      "tag": "x86-16",
+      "name": "Arquitectura x86 de 16 Bits",
+      "shortDescription": "Arquitectura x86 original de 16 bits utilizada en los procesadores Intel 8086 y 80286, con direccionamiento en modo real o protegido primitivo.",
+      "file": "x86_16.md",
+      "level": "Legado / Real Mode",
+      "relatedTags": ["x86", "x86-assembly", "x86-nasm"]
+    },
+    {
+      "id": "x86-32",
+      "tag": "x86-32",
+      "name": "Arquitectura IA-32 (32 Bits)",
+      "shortDescription": "Arquitectura x86 de 32 bits (también conocida como IA-32), introducida con el procesador Intel 80386.",
+      "file": "x86_32.md",
+      "level": "Sistemas de 32 bits",
+      "relatedTags": ["x86", "x86-64", "x86-x64"]
+    },
+    {
+      "id": "x86-64",
+      "tag": "x86-64",
+      "name": "Arquitectura x86-64 (AMD64 / Intel 64)",
+      "shortDescription": "Arquitectura de 64 bits (también llamada AMD64 o Intel 64), que extiende la arquitectura x86 original para soportar registros y espacios de memoria de 64 bits.",
+      "file": "x86_64.md",
+      "level": "Arquitectura Actual",
+      "relatedTags": ["x86-32", "x86-64-assembly-nasm", "x86-x64"]
+    },
+    {
+      "id": "x86-64-assembly-nasm",
+      "tag": "x86-64-assembly-nasm",
+      "name": "Ensamblador x86-64 con NASM",
+      "shortDescription": "Programación en lenguaje ensamblador utilizando el conjunto de instrucciones de 64 bits (x86-64) y el ensamblador NASM (Netwide Assembler).",
+      "file": "x86_64_assembly_nasm.md",
+      "level": "Programación Práctica",
+      "relatedTags": ["x86-64", "x86-nasm", "x86-assembly"]
+    },
+    {
+      "id": "x86-assembly",
+      "tag": "x86-assembly",
+      "name": "Lenguaje Ensamblador x86",
+      "shortDescription": "Lenguaje ensamblador de bajo nivel específico para la familia de procesadores con arquitectura x86.",
+      "file": "x86_assembly.md",
+      "level": "Lenguaje / Mnemónicos",
+      "relatedTags": ["x86", "x86-nasm", "x86-64-assembly-nasm"]
+    },
+    {
+      "id": "x86-emulator",
+      "tag": "x86-emulator",
+      "name": "Emulación y Simulación x86",
+      "shortDescription": "Software diseñado para simular o emular el comportamiento de un procesador y sistema basado en la arquitectura x86 en otro hardware.",
+      "file": "x86_emulator.md",
+      "level": "Herramientas / Simulación",
+      "relatedTags": ["x86", "x86-kernel", "x86-16"]
+    },
+    {
+      "id": "x86-kernel",
+      "tag": "x86-kernel",
+      "name": "Desarrollo de Kernels x86",
+      "shortDescription": "Desarrollo, configuración o estudio de núcleos (kernels) de sistemas operativos optimizados o diseñados específicamente para la arquitectura x86.",
+      "file": "x86_kernel.md",
+      "level": "Sistemas Operativos / Bare-Metal",
+      "relatedTags": ["x86-32", "x86-64", "x86-emulator"]
+    },
+    {
+      "id": "x86-nasm",
+      "tag": "x86-nasm",
+      "name": "Ensamblador NASM (Netwide Assembler)",
+      "shortDescription": "Uso del ensamblador NASM (Netwide Assembler) para escribir código de bajo nivel para procesadores con arquitectura x86.",
+      "file": "x86_nasm.md",
+      "level": "Assembler Tooling",
+      "relatedTags": ["x86-assembly", "x86-64-assembly-nasm", "x86-16"]
+    },
+    {
+      "id": "x86-x64",
+      "tag": "x86-x64",
+      "name": "Ecosistema x86 / x64",
+      "shortDescription": "Término general que agrupa tanto a la arquitectura tradicional de 32 bits (x86) como a su evolución de 64 bits (x64 / x86-64).",
+      "file": "x86_x64.md",
+      "level": "Interoperabilidad / Migración",
+      "relatedTags": ["x86", "x86-32", "x86-64"]
+    }
+  ]
+}

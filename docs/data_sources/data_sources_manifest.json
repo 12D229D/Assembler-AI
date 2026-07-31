@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Assembler-AI Data Sources Registry Manifest",
+  "version": "1.0.0",
+  "description": "Registro oficial y manifiesto de fuentes de datos externas e integraciones de IA de Assembler-AI.",
+  "primarySource": "huggingface",
+  "sources": [
+    {
+      "id": "huggingface",
+      "name": "Hugging Face Hub",
+      "baseUrl": "https://huggingface.co",
+      "type": "ai_hub",
+      "status": "active",
+      "priority": 1,
+      "authRequired": true,
+      "envKey": "HF_TOKEN",
+      "capabilities": {
+        "fetchModels": true,
+        "fetchDatasets": true,
+        "inferenceApi": true,
+        "embeddings": true,
+        "spaces": true
+      },
+      "resources": {
+        "models": [
+          {
+            "repoId": "deepseek-ai/DeepSeek-Coder-V2-Instruct",
+            "task": "code-generation",
+            "description": "Modelo de alto rendimiento para razonamiento en ensamblador y bajo nivel."
+          },
+          {
+            "repoId": "bigcode/starcoder2-15b",
+            "task": "code-completion",
+            "description": "Autocompletado y análisis estático de rutinas x86/NASM."
+          },
+          {
+            "repoId": "codellama/CodeLlama-34b-Instruct-hf",
+            "task": "text-generation",
+            "description": "Explicación didáctica de opcodes y traducción C <-> ASM."
+          },
+          {
+            "repoId": "Qwen/Qwen2.5-Coder-32B-Instruct",
+            "task": "code-generation",
+            "description": "Traducción de sintaxis Intel vs AT&T y optimización de registros."
+          }
+        ],
+        "datasets": [
+          {
+            "datasetId": "assembly-x86-instructions",
+            "description": "Dataset de pares de instrucciones x86, latencias y banderas."
+          },
+          {
+            "datasetId": "c-to-assembly-pairs",
+            "description": "Funciones C pareadas con su salida desensamblada en NASM."
+          }
+        ],
+        "embeddings": [
+          {
+            "modelId": "BAAI/bge-large-en-v1.5",
+            "dimensions": 1024,
+            "description": "Embeddings semánticos para RAG de la Base de Conocimiento."
+          }
+        ]
+      }
+    },
+    {
+      "id": "github",
+      "name": "GitHub Repositories",
+      "baseUrl": "https://github.com",
+      "type": "code_repo",
+      "status": "planned",
+      "priority": 2,
+      "authRequired": false,
+      "envKey": "GITHUB_TOKEN",
+      "capabilities": {
+        "searchCode": true,
+        "fetchDocumentation": true
+      }
+    },
+    {
+      "id": "intel_sdm",
+      "name": "Intel® 64 and IA-32 Architectures Developer Manuals",
+      "baseUrl": "https://www.intel.com",
+      "type": "official_doc",
+      "status": "planned",
+      "priority": 2,
+      "authRequired": false,
+      "capabilities": {
+        "fetchDocumentation": true
+      }
+    },
+    {
+      "id": "godbolt",
+      "name": "Compiler Explorer (Godbolt)",
+      "baseUrl": "https://godbolt.org",
+      "type": "live_compiler",
+      "status": "planned",
+      "priority": 3,
+      "authRequired": false,
+      "capabilities": {
+        "liveCompilation": true,
+        "disassembly": true
+      }
+    },
+    {
+      "id": "stackoverflow",
+      "name": "Stack Overflow Assembly Tag",
+      "baseUrl": "https://stackoverflow.com",
+      "type": "qna_community",
+      "status": "planned",
+      "priority": 3,
+      "authRequired": false,
+      "capabilities": {
+        "searchQnA": true
+      }
+    },
+    {
+      "id": "arxiv",
+      "name": "ArXiv Computer Science (cs.AR / cs.SE)",
+      "baseUrl": "https://arxiv.org",
+      "type": "academic_research",
+      "status": "planned",
+      "priority": 4,
+      "authRequired": false,
+      "capabilities": {
+        "fetchPapers": true
+      }
+    }
+  ]
+}
